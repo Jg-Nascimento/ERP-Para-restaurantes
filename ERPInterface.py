@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 
 class adminwindow():
 
-    def GerarRelatorioDeProdutos(self):
-        from reportlab.pdfgen import canvas
-
+    def conectar(self):
         try:
             conexao = pymysql.connect(
                 host='localhost',
@@ -23,7 +21,12 @@ class adminwindow():
             )
         except:
             print('erro')
+        return conexao
 
+    def GerarRelatorioDeProdutos(self):
+        from reportlab.pdfgen import canvas
+
+        conexao = self.conectar()
 
         try:
             with conexao.cursor() as cursor:
@@ -76,17 +79,7 @@ class adminwindow():
         self.preco.delete(0, END)
 
     def MostarProdutosBackEnd(self):
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro')
+        conexao = self.conectar()
 
 
         try:
@@ -118,18 +111,7 @@ class adminwindow():
     def RemoverCadastrosBackEnd(self):
         idDeletar = int(self.tree.selection()[0])
 
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-
-        except:
-            print('erro ao conectar no banco de dados')
+        conexao = self.conectar()
 
         with conexao.cursor() as cursor:
             cursor.execute('delete from produtos where id = {};'.format(idDeletar))
@@ -138,17 +120,7 @@ class adminwindow():
         self.MostarProdutosBackEnd()
 
     def PesquisarPorNomeBackEnd(self):
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro')
+        conexao = self.conectar()
 
 
         try:
@@ -182,17 +154,7 @@ class adminwindow():
         self.pesquisar.delete(0,END)
 
     def PesquisarPorGrupoBackEnd(self):
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro')
+        conexao = self.conectar()
 
 
         try:
@@ -227,19 +189,7 @@ class adminwindow():
 
     def LimparCadastrosBackEnd(self):
         if messagebox.askokcancel('Limpar dados CUIDADO!!', 'DESEJA EXCLUIR TODOS OS DADOS DA TABELA ? NAO HÁ VOLTA!!'):
-
-            try:
-                conexao = pymysql.connect(
-                    host='localhost',
-                    user='root',
-                    password='Caio@lemos12',
-                    db='erp',
-                    charset='utf8mb4',
-                    cursorclass=pymysql.cursors.DictCursor
-                )
-
-            except:
-                print('erro ao conectar no banco de dados')
+            conexao = self.conectar()
 
             with conexao.cursor() as cursor:
                 cursor.execute('truncate table produtos;')
@@ -253,17 +203,7 @@ class adminwindow():
         grupo = self.grupo.get()
         preco = self.preco.get()
 
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro')
+        conexao = self.conectar()
 
 
         with conexao.cursor() as cursor:
@@ -347,8 +287,8 @@ class adminwindow():
         self.file_menu = Menu(self.menubar, tearoff=0)
         self.file_menu.add_command(label="Banco de dados")
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Sair")
-        self.menubar.add_cascade(label="Configuraçoes", menu=self.file_menu)
+        self.file_menu.add_command(label="Caixa", command=CaixaWindow)
+        self.menubar.add_cascade(label="Caixa", menu=self.file_menu)
         self.menubar.add_separator()
 
         self.help_menu = Menu(self.menubar, tearoff=0)
@@ -379,6 +319,14 @@ class adminwindow():
         self.admin.configure(menu=self.menubar)
 
         self.admin.mainloop()
+
+class CaixaWindow():
+    def __init__(self):
+        root = Tk()
+        root.geometry("500x500")
+        root.title("Caixa")
+
+        root.mainloop()
 
 
 class Estatisticas():
@@ -486,22 +434,18 @@ class pedidoswindow():
         except:
             print('erro no banco de dados')
 
-        print(resultadoq)
 
 
-
-        with conexao.cursor() as cursor:
-            cursor.execute('insert into caixa (mesa, nome, preco) values (%s,%s, %s)', (int(resultadoq['localEntrega']), resultadoq['nome'], resultadoq['preco']))
-            conexao.commit()
+        for linha in resultadoq:
+            with conexao.cursor() as cursor:
+                cursor.execute('insert into caixa (mesa, nome, preco) values (%s,%s, %s)', (linha['localEntrega'], linha['nome'], linha['preco']))
+                conexao.commit()
 
 
 
 class mainwindow():
 
-    def VerificaLogin(self):
-        autenticado = False
-        usuarioMaster = False
-
+    def conectar(self):
         try:
             conexao = pymysql.connect(
                 host='localhost',
@@ -512,7 +456,14 @@ class mainwindow():
                 cursorclass=pymysql.cursors.DictCursor
             )
         except:
-            print('erro ao conectar no banco de dados')
+            print('erro')
+        return conexao
+
+    def VerificaLogin(self):
+        autenticado = False
+        usuarioMaster = False
+
+        conexao = self.conectar()
 
         usuario = self.usuario.get()
         senha = self.senha.get()
@@ -550,17 +501,7 @@ class mainwindow():
 
     def Update(self):
 
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro')
+        conexao = self.conectar()
 
 
         try:
@@ -593,17 +534,8 @@ class mainwindow():
             i+=1
 
     def VisualizarCadastros(self):
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-        except:
-            print('erro ao conectar no banco de dados')
+
+        conexao = self.conectar()
 
         try:
             with conexao.cursor() as cursor:
@@ -644,18 +576,7 @@ class mainwindow():
 
         idDeletar = int(self.tree.selection()[0])
 
-        try:
-            conexao = pymysql.connect(
-                host='localhost',
-                user='root',
-                password='Caio@lemos12',
-                db='erp',
-                charset='utf8mb4',
-                cursorclass=pymysql.cursors.DictCursor
-            )
-
-        except:
-            print('erro ao conectar no banco de dados')
+        conexao = self.conectar()
 
 
         with conexao.cursor() as cursor:
@@ -692,8 +613,6 @@ class mainwindow():
 
 
         self.root.mainloop()
-
-
 
 
 try:
