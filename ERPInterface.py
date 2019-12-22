@@ -310,7 +310,7 @@ class adminwindow():
         self.menubar.add_cascade(label='Pedidos', menu=self.pedidos_menu)
         self.menubar.add_separator()
 
-        self.estatistica_menu = Menu(self.menubar, tearoff=0)
+        self.estatistica_menu = Menu(self.menubar, tearoff=0);
         self.estatistica_menu.add_command(label='Visualizar estatisticas', command=Estatisticas)
         self.menubar.add_cascade(label='Estatistica', menu=self.estatistica_menu)
         self.menubar.add_separator()
@@ -321,12 +321,101 @@ class adminwindow():
         self.admin.mainloop()
 
 class CaixaWindow():
-    def __init__(self):
-        root = Tk()
-        root.geometry("500x500")
-        root.title("Caixa")
 
-        root.mainloop()
+    def Conectar(self):
+        try:
+            conexao = pymysql.connect(
+                host='localhost',
+                user='root',
+                password='Caio@lemos12',
+                db='erp',
+                charset='utf8mb4',
+                cursorclass=pymysql.cursors.DictCursor
+            )
+        except:
+            print('erro')
+        return conexao
+
+    def __init__(self):
+        self.rootCaixa = Tk()
+        self.rootCaixa.title("Caixa")
+        self.rootCaixa['bg'] = '#524F4F'
+
+        self.tree = ttk.Treeview(self.rootCaixa, selectmode="browse",
+                                 column=("column1", "column2", "column3"),
+                                 show='headings')
+
+        self.tree.column("column1", width=200, minwidth=30, stretch=NO)
+        self.tree.heading('#1', text='Mesa')
+
+        self.tree.column("column2", width=200, minwidth=30, stretch=NO)
+        self.tree.heading('#2', text='Nome')
+
+        self.tree.column("column3", width=100, minwidth=30, stretch=NO)
+        self.tree.heading('#3', text='Preco')
+
+        self.tree.grid(row=0, column=0, padx=10, pady=10, columnspan=3, rowspan=6)
+
+        self.PermitirDesconto = Button(self.rootCaixa, text='Permitir desconto', width=15, bg='gray', relief='flat', highlightbackground='#524F4F', fg='black', command = self.PedirDesconto)
+        self.PermitirDesconto.grid(row=0, column=4)
+
+        self.pesquisarMesa = Entry(self.rootCaixa)
+        self.pesquisarMesa.grid(row=7, column=0, padx=10, pady=10, sticky=W)
+
+        Button(self.rootCaixa, text='Pesquise a mesa', width=15, bg='gray', relief='flat', highlightbackground='#524F4F', fg='black').grid(row=7, column=1, sticky=W)
+
+        Button(self.rootCaixa, text='Efetuar soma', width=15, bg='gray', relief='flat', highlightbackground='#524F4F', fg='black').grid(row=8, column=0, sticky=W, padx=10, pady=10)
+
+        self.mostrarPagamento = Label(self.rootCaixa, text="Valor a pagar",bg='#524F4F', fg='white')
+        self.mostrarPagamento.grid(row=8, column=1, sticky=W)
+
+        Button(self.rootCaixa, text='Efetuar Pagamento', width=15, bg='gray', relief='flat', highlightbackground='#524F4F', fg='black').grid(row=8, column=2)
+
+        self.MostrarPedidosBackEnd()
+        self.rootCaixa.mainloop()
+
+
+    def PedirDesconto(self):
+
+        self.senhaAdmin = Entry(self.rootCaixa)
+        self.senhaAdmin.grid(row=0, column=4)
+
+        self.PermitirDesconto.grid(row=1,column=4)
+        self.PermitirDesconto['command'] = self.teste
+
+
+    def teste(self):
+
+        if  self.senhaAdmin.get() == "ADMIN":
+            valor = self.mostrarPagamento['text']
+            self.mostrarPagamento = Entry(self.rootCaixa)
+            self.mostrarPagamento.grid(row=8,column=1, sticky=W)
+            self.mostrarPagamento.insert(END, valor)
+
+    def MostrarPedidosBackEnd(self):
+        conexao = self.Conectar()
+
+        try:
+            with conexao.cursor() as cursor:
+                cursor.execute("select * from caixa")
+                resultadoPedidos = cursor.fetchall()
+
+        except:
+            print('erro no banco de dados')
+
+        self.tree.delete(*self.tree.get_children())
+
+
+        linhaV = []
+        for linha in resultadoPedidos:
+            linhaV.append(linha['mesa'])
+            linhaV.append(linha['nome'])
+            linhaV.append(linha['preco'])
+
+            self.tree.insert("", END, values=linhaV, iid=linha['id'], tag='1')
+
+            linhaV.clear()
+
 
 
 class Estatisticas():
